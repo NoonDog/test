@@ -1,0 +1,208 @@
+
+
+■フォークしてからpushするまでの流れ
+
+◆ブラウザ上で、大元のリポジトリをフォークする
+
+◆ブラウザ上で、フォークしたリポジトリに対して、新しいブランチを作る
+push時にpush先が２つあると、それぞれの内容を変えることが出来て便利。
+ブランチが違えば、PRの内容をそれぞれ別に出来て便利。
+
+◆フォークしたリポジトリをcloneする
+git clone リポジトリのURL
+--------------------------------------------
+git clone https://github.com/WonderBlack/test.git
+--------------------------------------------
+
+◆cloneしたリポジトリのブランチを表示する。
+git branch -a
+--------------------------------------------
+kamijimamenombp:test kamishimakaname$ git branch -a
+* master
+  remotes/origin/HEAD -> origin/master
+  remotes/origin/develop
+  remotes/origin/master
+--------------------------------------------
+この様にフォークしたリポジトリ（大元からフォークした自分のリポジトリ）のリモート名は、デフォルトではoriginとして登録されている。
+
+◆大元のリポジトリのリモート名を登録する。
+--------------------------------------------
+git remote add リモート名 リモートのURL
+git remote add upstream https://github.com/NoonDog/test.git
+--------------------------------------------
+
+◆登録済みのリモート名を確認
+--------------------------------------------
+kamijimamenombp:test kamishimakaname$ git remote -v
+origin	https://github.com/WonderBlack/test.git (fetch)
+origin	https://github.com/WonderBlack/test.git (push)
+upstream	https://github.com/NoonDog/test.git (fetch)
+upstream	https://github.com/NoonDog/test.git (push)
+--------------------------------------------
+upstreamが追加されていることがわかる。
+
+◆再度ブランチを表示
+先に
+git fetch --all
+をしてから
+git branch -a
+を打つ。
+--------------------------------------------
+kamijimamenombp:test kamishimakaname$ git fetch --all
+Fetching origin
+Fetching upstream
+From https://github.com/NoonDog/test
+ * [new branch]      master     -> upstream/master
+kamijimamenombp:test kamishimakaname$ git branch -a
+* master
+  remotes/origin/HEAD -> origin/master
+  remotes/origin/develop
+  remotes/origin/master
+  remotes/upstream/master
+--------------------------------------------
+remotes/upstreamが出来ているのがわかる。
+ここで作成した、remotes/upstream/masterは、直接pushすることはない。
+このリモートの変更を、開発用のリポジトリに取り込むときに
+git pull upstream/master
+として使うことになる。
+push先は基本的には
+git push origin master
+になる。
+
+■開発用にブランチを作る
+
+git checkout ブランチ名
+--------------------------------------------
+kamijimamenombp:test kamishimakaname$ git checkout develop
+Branch develop set up to track remote branch develop from origin.
+Switched to a new branch 'develop'
+kamijimamenombp:test kamishimakaname$ git branch -a
+* develop
+  master
+  remotes/origin/HEAD -> origin/master
+  remotes/origin/develop
+  remotes/origin/master
+  remotes/upstream/master
+--------------------------------------------
+git heckoutはブランチの切り替え用のコマンドだが、ブランチがない場合は自動で作成してくれる。
+
+■ソースを修正する。
+
+適宜、ソースを修正して保存する。
+
+■差分を見る
+
+git diff
+--------------------------------------------
+kamijimamenombp:test kamishimakaname$ git diff
+diff --git a/test.txt b/test.txt
+index 06e567b..3b827f0 100644
+--- a/test.txt
++++ b/test.txt
+@@ -5,3 +5,5 @@
+ 5
+ 6
+ 7
++8
++
+--------------------------------------------
+
+■別の差分ツールを使えるようにする。
+--------------------------------------------
+git config --global diff.tool vimdiff
+git config --global difftool.prompt false
+git config --global merge.tool vimdiff
+git config --global mergetool.prompt false
+--------------------------------------------
+この設定をすると、
+--------------------------------------------
+git difftool
+--------------------------------------------
+で、vimの差分表示ができる。
+画面を終了する場合は
+--------------------------------------------
+:qa!
+--------------------------------------------
+と打つ。
+
+■修正したファイルをGit管理下に置く
+
+--------------------------------------------
+git add .
+--------------------------------------------
+add .では全てのファイルを置く。
+git addすると、リモートとの差分がなくなる。
+
+■commit
+
+--------------------------------------------
+git commit
+--------------------------------------------
+
+■commitでエラーが出たら
+
+--------------------------------------------
+kamijimamenombp:test kamishimakaname$ git commit
+
+*** Please tell me who you are.
+
+Run
+
+  git config --global user.email "you@example.com"
+  git config --global user.name "Your Name"
+
+to set your account's default identity.
+Omit --global to set the identity only in this repository.
+
+fatal: unable to auto-detect email address (got 'kamishimakaname@kamijimamenombp.(none)')
+kamijimamenombp:test kamishimakaname$ git config --global user.email kinounoeiga@gmail.com
+kamijimamenombp:test kamishimakaname$ git config --global user.name WonderBlack
+--------------------------------------------
+
+◆push
+
+--------------------------------------------
+git push origin master
+--------------------------------------------
+
+git push リモート名 ローカルブランチ名:リモートのブランチ名
+--------------------------------------------
+git push origin develop:master
+--------------------------------------------
+※push先が以下か確認する
+git push upstream develop:master
+
+
+■pushでエラーが出たら
+
+--------------------------------------------
+git config --global --edit
+
+#以下を追記
+[credential]
+  helper = osxkeychain
+  useHttpPath = true
+--------------------------------------------
+
+■大元の差分をローカルに取り込む
+
+git pull リモート名 リモートのブランチ名
+--------------------------------------------
+git pull upstream master
+--------------------------------------------
+
+■リモートブランチの削除
+
+画面からbranchをクリックしてブランチ一覧を表示する。
+右側にゴミ箱のアイコンがあるので、それをクリックすると削除できる。
+--------------------------------------------
+
+■PRを分けたい場合
+
+画面から大元のリポジトリに行く。
+ブランチ（temporaryなど）を新たに作成して、そのリポジトリをクローン。
+あとは、クローンしたリポジトリを修正して、add,commit,pushをする。
+pushするときに、
+git push upstream temporary
+として、リモートでmasterとは別に作成したブランチにpushするのがキモ。
+
